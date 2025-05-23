@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flexbox Wrap vs Wrap-Reverse</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            width: 300px; /* Forces wrapping to show differences */
+            margin: 20px auto;
+            border: 2px solid black;
+            padding: 10px;
+            height: 400px; /* Increased height to show align-content effects */
+        }
+        .wrap-reverse {
+            flex-wrap: wrap-reverse;
+        }
+        .wrap-reverse-flex-start {
+            flex-wrap: wrap-reverse;
+            align-content: flex-end; /* Corrected: Ensures items start at the top when extra height exists */
+        }
+        .item {
+            width: 80px;
+            height: 50px;
+            margin: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+        }
+        .item:nth-child(1) { background-color: red; }
+        .item:nth-child(2) { background-color: orange; }
+        .item:nth-child(3) { background-color: yellow; color: black; }
+        .item:nth-child(4) { background-color: green; }
+        .item:nth-child(5) { background-color: blue; }
+        .item:nth-child(6) { background-color: indigo; }
+        .item:nth-child(7) { background-color: violet; }
+    </style>
+</head>
+<body>
+    <h2>Normal Wrap</h2>
+    <div class="container">
+        <div class="item">1</div>
+        <div class="item">2</div>
+        <div class="item">3</div>
+        <div class="item">4</div>
+        <div class="item">5</div>
+        <div class="item">6</div>
+        <div class="item">7</div>
+    </div>
+    
+    <h2>Wrap Reverse</h2>
+    <div class="container wrap-reverse">
+        <div class="item">1</div>
+        <div class="item">2</div>
+        <div class="item">3</div>
+        <div class="item">4</div>
+        <div class="item">5</div>
+        <div class="item">6</div>
+        <div class="item">7</div>
+    </div>
+    
+    <h2>Wrap Reverse with Align-Content: Flex-End (Fix for Top Alignment)</h2>
+    <div class="container wrap-reverse-flex-start">
+        <div class="item">1</div>
+        <div class="item">2</div>
+        <div class="item">3</div>
+        <div class="item">4</div>
+        <div class="item">5</div>
+        <div class="item">6</div>
+        <div class="item">7</div>
+    </div>
+</body>
+</html>
