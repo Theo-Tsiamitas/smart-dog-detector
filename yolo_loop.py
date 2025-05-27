@@ -5,8 +5,11 @@ import time
 import cv2
 import simpleaudio as sa
 from ultralytics import YOLO
-
+ 
 base_path = os.path.dirname(__file__)
+snapshot_dir = os.path.join(base_path, "snapshots")   # A folder named snapshots will be created
+os.makedirs(snapshot_dir, exist_ok=True)   # All snapshots can be saved inside it automatically.
+
 sound_path = os.path.join(base_path, "alert.wav")
 CONFIDENCE_THRESHOLD = 0.5
 
@@ -42,10 +45,10 @@ def run_detection():
                 if results[0].names[cls_id]=="dog" and conf>CONFIDENCE_THRESHOLD:
                     # first time dog seen
                     print(f"🐶 Dog detected ({conf:.2f})")
-                    fn = f"snapshot_{time.strftime('%Y%m%d-%H%M%S')}.jpg"
-                    cv2.imwrite(fn, frame)
-                    print(f"Snapshot saved as {fn}")
-                    print("Playing alert…")
+                    filename = f"snapshot_{time.strftime('%Y%m%d-%H%M%S')}.jpg"
+                    filepath = os.path.join(snapshot_dir, filename)
+                    cv2.imwrite(filepath, frame)
+                    print(f"Snapshot saved as {filepath}")
                     try:
                         wave_obj = sa.WaveObject.from_wave_file(sound_path)
                         audio_playback = wave_obj.play()
