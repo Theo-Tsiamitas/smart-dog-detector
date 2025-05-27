@@ -1,22 +1,31 @@
-# This is a test change in the test-detection-fix branch
-
-from ultralytics import YOLO
-import cv2
-import time
+# yolo_loop.py
+# Smart Dog Detector using YOLOv8
 import os
+import time
+import cv2
+import simpleaudio as sa
+from ultralytics import YOLO
+ 
+base_path = os.path.dirname(__file__)
+snapshot_dir = os.path.join(base_path, "snapshots")   # A folder named snapshots will be created
+os.makedirs(snapshot_dir, exist_ok=True)   # All snapshots can be saved inside it automatically.
+
+sound_path = os.path.join(base_path, "alert.wav")
+CONFIDENCE_THRESHOLD = 0.5
 
 def run_detection():
-    # Load YOLOv8 nano model
     model = YOLO("yolov8s.pt")
-
-    # Open the webcam (change to 1 if needed)
     cap = cv2.VideoCapture(1)
-
     if not cap.isOpened():
         print("Error: Could not open camera.")
         return
 
     print("Running YOLO Detection. Press 's' to take a snapshot, 'q' to stop.")
+
+    last_detection_time = 0
+    cooldown = 5  # seconds between *new* snapshots
+    alert_played = False
+    audio_playback = None
 
     while True:
         ret, frame = cap.read()
@@ -24,49 +33,71 @@ def run_detection():
             print("Error reading from camera.")
             break
 
-        # Run YOLO detection
         results = model(frame, imgsz=640)
-        annotated_frame = results[0].plot()
+        annotated = results[0].plot()
+        now = time.time()
 
-        # Show live detection
-        cv2.imshow("YOLO Detection", annotated_frame)
+        # once we've played, we never play again this run
+        if not alert_played:
+            for box in results[0].boxes:
+                cls_id = int(box.cls[0])
+                conf = float(box.conf[0])
+                if results[0].names[cls_id]=="dog" and conf>CONFIDENCE_THRESHOLD:
+                    # first time dog seen
+                    print(f"🐶 Dog detected ({conf:.2f})")
+                    filename = f"snapshot_{time.strftime('%Y%m%d-%H%M%S')}.jpg"
+                    filepath = os.path.join(snapshot_dir, filename)
+                    cv2.imwrite(filepath, frame)
+                    print(f"Snapshot saved as {filepath}")
+                    try:
+                        wave_obj = sa.WaveObject.from_wave_file(sound_path)
+                        audio_playback = wave_obj.play()
+                    except Exception as e:
+                        print("Error playing sound:", e)
+                    alert_played = True
+                    break
 
-        # Handle keypresses
+        # if alert_played, overlay text forever
+        if alert_played:
+            cv2.putText(
+                annotated, "⚠️ Dog Detected!", (10,30),
+                cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 3
+            )
+
+        cv2.imshow("YOLO Detection", annotated)
         key = cv2.waitKey(1) & 0xFF
 
-        # Take a snapshot
-        if key == ord('s'):
-            timestamp = time.strftime("%Y%m%d-%H%M%S")
-            filename = f"snapshot_{timestamp}.jpg"
-            cv2.imwrite(filename, frame)
-            print(f"Snapshot saved as {filename}")
-
-        # Quit detection
-        elif key == ord('q'):
+        if key==ord('s'):
+            ts = time.strftime("%Y%m%d-%H%M%S")
+            fn = f"snapshot_{ts}.jpg"
+            cv2.imwrite(fn, frame)
+            print(f"Snapshot saved as {fn}")
+        elif key==ord('q'):
             print("Exiting detection.")
             break
 
-        # Handle window closed manually
-        if cv2.getWindowProperty("YOLO Detection", cv2.WND_PROP_VISIBLE) < 1:
+        # if user closes window with the X
+        if cv2.getWindowProperty("YOLO Detection", cv2.WND_PROP_VISIBLE)<1:
             print("Window closed.")
             break
+
+    # stop the sound on exit
+    if audio_playback and audio_playback.is_playing():
+        audio_playback.stop()
 
     cap.release()
     cv2.destroyAllWindows()
 
-
-# Main program loop
-while True:
-    print("\n📷 Smart Dog Detector Menu")
-    print("Press 'r' to run YOLO detection")
-    print("Press 's' to capture a picture and save it")
-    print("Press 'q' to quit the program")
-    choice = input("Your choice: ").strip().lower()
-
-    if choice == 'r':
-        run_detection()
-    elif choice == 'q':
-        print("Goodbye!")
-        break
-    else:
-        print("Invalid input. Please press 'r' or 'q'.")
+if __name__=="__main__":
+    while True:
+        print("\n📷 Smart Dog Detector Menu")
+        print(" Press 'r' to run YOLO detection")
+        print(" Press 'q' to quit")
+        choice = input("Your choice: ").strip().lower()
+        if choice=='r':
+            run_detection()
+        elif choice=='q':
+            print("Goodbye!")
+            break
+        else:
+            print("Invalid input—please press 'r' or 'q'.")
