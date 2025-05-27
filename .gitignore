@@ -1,3 +1,9 @@
 snapshots/
 __pycache__/
 *.pyc
+
+# Exclude snapshot images
+snapshots/
+
+# Exclude VS Code temporary file
+tempCodeRunnerFile.py
